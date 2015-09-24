@@ -1,0 +1,31 @@
+---
+# インストール済かcheck
+- name: Check if percona-tool-kit is installed
+  command: dpkg-query -W {{ package }}
+  register: package_check_deb
+  failed_when: package_check_deb.rc > 1
+  changed_when: package_check_deb.rc == 1
+
+- debug: var=package_check_deb.rc
+
+# "apt-get update"
+- apt: update_cache=yes
+  when: package_check_deb.rc == 1
+
+- name: Install common
+  apt: name={{ item }} state=present
+  with_items:
+    - tree
+    - dstat
+    - htop
+
+- name: Download percona-tool-kit
+  get_url: 
+    url="{{ perconatk_deb_url }}"
+    dest="/usr/local/src/perconatk.deb"
+  when: package_check_deb.rc == 1
+
+- name: Install percona-tool-kit
+  apt: deb="/usr/local/src/perconatk.deb"
+  sudo: true
+  when: package_check_deb.rc == 1

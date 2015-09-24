@@ -1,0 +1,7 @@
+---
+- hosts: all
+  user: gomao
+  sudo: yes
+  roles:
+    - common
+    - nginx

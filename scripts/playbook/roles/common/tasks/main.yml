@@ -1,0 +1,23 @@
+---
+
+- name: limits.conf file
+  template: >
+     src=limits.conf.j2
+     dest=/etc/security/limits.conf
+     owner=root
+     group=root
+     mode=0644
+
+#- name: sysctl.conf file
+#  template: >
+#     src=limits.conf.j2
+#     dest=/etc/sysctl.conf
+#     owner=root
+#     group=root
+#     mode=0644
+
+- include: setup-Redhat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: setup-Debian.yml
+  when: ansible_os_family == 'Debian'

@@ -1,0 +1,5 @@
+package: "percona-toolkit"
+perconatk_version: 2.2.15
+perconatk_rpm_url: "https://www.percona.com/downloads/percona-toolkit/{{ perconatk_version }}/RPM/percona-toolkit-2.2.15-2.noarch.rpm"
+perconatk_deb: "percona-toolkit_2.2.15-2_all.deb"
+perconatk_deb_url: "https://www.percona.com/downloads/percona-toolkit/{{ perconatk_version }}/deb/{{ perconatk_deb }}"

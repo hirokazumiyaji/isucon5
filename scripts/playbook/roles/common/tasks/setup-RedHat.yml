@@ -1,0 +1,20 @@
+---
+- include: epel.yml
+
+- name: Install common
+  yum: name={{item}} state=installed
+  with_items:
+    - gcc
+    - gcc-c++
+    - vim
+    - unzip
+    - libselinux-python
+    - telnet
+    - tree
+    - perl-Time-HiRes
+    - perl-IO-Socket-SSL
+  tags: common
+
+- name: percona-tool-kit
+  yum: name={{ perconatk_rpm_url }}
+    state=present
