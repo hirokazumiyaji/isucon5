@@ -1,0 +1,22 @@
+[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+symbolic-links=0
+
+max_allowed_packet=2048M
+
+# SlowLog関連
+slow_query_log=ON
+long_query_time=0.2
+log-slow-queries=/var/log/mysql/slow.log
+
+innodb_buffer_pool_size = 2G
+innodb_flush_log_at_trx_commit = 0
+innodb_flush_method=O_DIRECT
+
+thread_cache_size = 16
+
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid

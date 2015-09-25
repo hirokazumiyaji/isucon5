@@ -1,5 +1,12 @@
 ---
-# インストール済かcheck
+- name: Install common
+  apt: name={{ item }} state=present
+  with_items:
+    - tree
+    - dstat
+    - htop
+
+# percona-tool-kit インストール済かcheck
 - name: Check if percona-tool-kit is installed
   command: dpkg-query -W {{ package }}
   register: package_check_deb
@@ -8,16 +15,9 @@
 
 - debug: var=package_check_deb.rc
 
-# "apt-get update"
-- apt: update_cache=yes
+- name: apt-get update
+  apt: update_cache=yes
   when: package_check_deb.rc == 1
-
-- name: Install common
-  apt: name={{ item }} state=present
-  with_items:
-    - tree
-    - dstat
-    - htop
 
 - name: Download percona-tool-kit
   get_url: 

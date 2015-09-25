@@ -8,16 +8,42 @@
      group=root
      mode=0644
 
-#- name: sysctl.conf file
-#  template: >
-#     src=limits.conf.j2
-#     dest=/etc/sysctl.conf
-#     owner=root
-#     group=root
-#     mode=0644
+- name: sysctl.conf file
+  template: >
+     src=limits.conf.j2
+     dest=/etc/sysctl.conf
+     owner=root
+     group=root
+     mode=0644
+
+- name: set scripts
+  template: >
+    src={{ item }}.j2
+    dest=/home/isucon/{{ item }}
+    owner=root
+    group=root
+    mode=0755
+  with_items:
+    - clear_log.sh
+    - analyze.go
+
+- name: my.cnf
+  template: >
+    src=my.cnf.j2
+    dest=/etc/my.cnf
+    owner=root
+    group=root
+    mode=0644
 
 - include: setup-Redhat.yml
   when: ansible_os_family == 'RedHat'
 
 - include: setup-Debian.yml
   when: ansible_os_family == 'Debian'
+
+- name: download ack
+  get_url:
+    url=http://beyondgrep.com/ack-2.14-single-file
+    dest=/usr/bin/ack
+    mode=0755
+

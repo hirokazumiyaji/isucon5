@@ -1,0 +1,123 @@
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"os"
+)
+
+/*
+nginx log format
+log_format json '{"time": "$time_iso8601", '
+                '"remote_addr": "$remote_addr", '
+                '"remote_user": "$remote_user", '
+                '"body_bytes_sent": $body_bytes_sent, '
+                '"request_time": $request_time, '
+                '"status": $status, '
+                '"request": "$request", '
+                '"http_referrer": "$http_referer", '
+                '"http_user_agent": "$http_user_agent", '
+                '"upstream_response_time": $upstream_response_time}';
+*/
+
+type Line struct {
+	Time                 string  `json:"time"`
+	RemoteAddr           string  `json:"remote_addr"`
+	RemoteUser           string  `json:"remote_user"`
+	BodyBytesSent        int     `json:"body_bytes_sent"`
+	RequestTime          float32 `json:"request_time"`
+	Status               int     `json:"status"`
+	Request              string  `json:"request"`
+	HttpReferrer         string  `json:"http_referrer"`
+	HttpUserAgent        string  `json:"http_user_agent"`
+	UpstreamResponseTime float32 `json:"upstream_response_time"`
+}
+
+type Measurement struct {
+	Count                     int
+	BodyButesSentTotal        int
+	RequestTimeTotal          float32
+	Status2xx                 int
+	Status3xx                 int
+	Status4xx                 int
+	Status5xx                 int
+	UpstreamResponseTimeTotal float32
+}
+
+func (m Measurement) BodyButesSentAverage() int {
+	return m.BodyButesSentTotal * 100 / m.Count
+}
+
+func (m Measurement) RequestTimeAverage() float32 {
+	return m.RequestTimeTotal * 100.0 / float32(m.Count)
+}
+
+func (m Measurement) UpstreamResponseTimeAverage() float32 {
+	return m.UpstreamResponseTimeTotal * 100.0 / float32(m.Count)
+}
+
+func main() {
+	scanner := bufio.NewScanner(os.Stdin)
+	total := make(map[string]Measurement)
+	for {
+		var line Line
+		if ok := scanner.Scan(); !ok {
+			break
+		}
+		if err := json.Unmarshal(scanner.Bytes(), &line); err != nil {
+			continue
+		}
+		status2xx, status3xx, status4xx, status5xx := 0, 0, 0, 0
+		if line.Status >= 200 && line.Status < 300 {
+			status2xx = 1
+		}
+		if line.Status >= 300 && line.Status < 400 {
+			status3xx = 1
+		}
+		if line.Status >= 400 && line.Status < 500 {
+			status4xx = 1
+		}
+		if line.Status >= 500 {
+			status5xx = 1
+		}
+		if m, ok := total[line.Request]; ok {
+			m.Count += 1
+			m.BodyButesSentTotal += line.BodyBytesSent
+			m.RequestTimeTotal += line.RequestTime
+			m.Status2xx += status2xx
+			m.Status3xx += status3xx
+			m.Status4xx += status4xx
+			m.Status5xx += status5xx
+			m.UpstreamResponseTimeTotal += line.UpstreamResponseTime
+			total[line.Request] = m
+		} else {
+			total[line.Request] = Measurement{
+				Count:                     1,
+				BodyButesSentTotal:        line.BodyBytesSent,
+				RequestTimeTotal:          line.RequestTime,
+				Status2xx:                 status2xx,
+				Status3xx:                 status3xx,
+				Status4xx:                 status4xx,
+				Status5xx:                 status5xx,
+				UpstreamResponseTimeTotal: line.UpstreamResponseTime,
+			}
+		}
+
+	}
+	fmt.Println("| request \t\t| count | 2xx \t| 3xx \t| 4xx \t| 5xx \t| request time(avg) \t| upstream response time(avg) |")
+	fmt.Println("|:--------\t\t|------:|------:|------:|------:|------:|------------------:\t|----------------------------:|")
+	for r, m := range total {
+		fmt.Printf(
+			"| %s \t| %d\t| %d\t| %d \t| %d \t| %d \t| %f \t\t| %f \t\t|\n",
+			r,
+			m.Count,
+			m.Status2xx,
+			m.Status3xx,
+			m.Status4xx,
+			m.Status5xx,
+			m.RequestTimeAverage(),
+			m.UpstreamResponseTimeAverage(),
+		)
+	}
+}
